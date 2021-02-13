@@ -88,4 +88,4 @@ Usage
 
 .. _cryptography: https://cryptography.io/en/latest/
 .. _cryptography installation guide: https://cryptography.io/en/latest/installation.html
-.. _GitHub: https://github.com/hupe1980/cryptoshredding/
+.. _GitHub: https://github.com/hupe1980/aws-s3-encryption-python/

@@ -31,27 +31,27 @@ class DataKeyAlgorithms(Enum):
         return secrets.token_bytes(self.iv_length)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def algorithm(self):
+    def algorithm(self) -> algorithms:
         return self._algorithm
 
     @property
-    def mode(self):
+    def mode(self) -> modes:
         return self._mode
 
     @property
-    def data_key_length(self):
+    def data_key_length(self) -> int:
         return self._data_key_length
 
     @property
-    def iv_length(self):
+    def iv_length(self) -> int:
         return self._iv_length
 
     @property
-    def tag_len(self):
+    def tag_len(self) -> int:
         return self._tag_len
 
 
@@ -94,5 +94,5 @@ class DataKey(object):
         return plaintext
 
     @property
-    def algorithm(self):
+    def algorithm(self) -> DataKeyAlgorithms:
         return self._algorithm
