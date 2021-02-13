@@ -52,7 +52,7 @@ Usage
 
 
    materials_provider = KmsMaterialsProvider(
-      key_id="",
+      key_id="alias/YOURAlias",
       client=boto3.client("kms", region_name="us-east-1"),
    )
    

@@ -6,10 +6,6 @@ from ..data_key import DataKeyAlgorithms, DataKey
 from .base import MaterialsProvider
 
 
-_BUCKET_NAME_EC_KEY = "*kms-bucket-name*"
-_OBJECT_KEY_EC_KEY = "*kms-object-key*"
-
-
 class KmsMaterialsProvider(MaterialsProvider):
     """Cryptographic materials provider for use with the AWS Key Management Service (KMS)."""
 
@@ -73,10 +69,10 @@ class KmsMaterialsProvider(MaterialsProvider):
         object_key = encryption_context.get("object_key", None)
 
         if bucket_name is not None:
-            kms_encryption_context[_BUCKET_NAME_EC_KEY] = bucket_name
+            kms_encryption_context["s3_bucket_name"] = bucket_name
 
         if object_key is not None:
-            kms_encryption_context[_OBJECT_KEY_EC_KEY] = object_key
+            kms_encryption_context["s3_object_key"] = object_key
 
         return kms_encryption_context
 
