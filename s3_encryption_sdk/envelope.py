@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 import base64
 import json
 
@@ -8,7 +8,7 @@ class Envelope(object):
         self,
         wrapped_data_key: bytes,
         iv: bytes,
-        material_description: Optional[dict[str, str]] = None,
+        material_description: Optional[Dict[str, str]] = None,
         key_wrapping_algorithm: Optional[str] = None,
         content_encryption_algorithm: str = "AES/GCM/NoPadding",
         tag_length: int = 128,
@@ -42,7 +42,7 @@ class Envelope(object):
             self._metadata["x-amz-unencrypted-content-length"] = str(unencrypted_content_length)
 
     @classmethod
-    def from_metatdata(cls, metadata):
+    def from_metatdata(cls, metadata: Dict[str, str]):
         return cls(
             wrapped_data_key=base64.b64decode(metadata["x-amz-key-v2"]),
             iv=base64.b64decode(metadata["x-amz-iv"]),
@@ -74,5 +74,5 @@ class Envelope(object):
         return base64.b64decode(self._metadata.get("x-amz-iv"))
 
     @property
-    def metadata(self) -> dict[str, str]:
+    def metadata(self) -> Dict[str, str]:
         return self._metadata

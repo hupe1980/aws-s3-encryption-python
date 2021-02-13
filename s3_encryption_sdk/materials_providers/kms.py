@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, Tuple
 import botocore
 
 from ..envelope import Envelope
@@ -25,7 +25,7 @@ class KmsMaterialsProvider(MaterialsProvider):
         self._grant_tokens = grant_tokens
         self._algorithm = algorithm
 
-    def decryption_materials(self, encryption_context: dict[str, any]) -> DataKey:
+    def decryption_materials(self, encryption_context: Dict[str, any]) -> DataKey:
         """Provide decryption materials."""
         envelope = encryption_context.get("envelope")
 
@@ -39,7 +39,7 @@ class KmsMaterialsProvider(MaterialsProvider):
 
         return encryption_key
 
-    def encryption_materials(self, encryption_context: dict[str, any]) -> Tuple[DataKey, Envelope]:
+    def encryption_materials(self, encryption_context: Dict[str, any]) -> Tuple[DataKey, Envelope]:
         """Provide encryption materials."""
         initial_material, encrypted_initial_material = self._generate_data_key(encryption_context)
         encryption_material_description = encryption_context.get("material_description", {}).copy()
@@ -65,7 +65,7 @@ class KmsMaterialsProvider(MaterialsProvider):
 
         return encryption_key, envelope
 
-    def _kms_encryption_context(self, encryption_context: dict[str, any]):
+    def _kms_encryption_context(self, encryption_context: Dict[str, any]):
         """Build the KMS encryption context from the encryption context."""
         kms_encryption_context = {}
 
@@ -80,7 +80,7 @@ class KmsMaterialsProvider(MaterialsProvider):
 
         return kms_encryption_context
 
-    def _decrypt_data_key(self, encryption_context: dict[str, any]) -> bytes:
+    def _decrypt_data_key(self, encryption_context: Dict[str, any]) -> bytes:
         """Decrypt an encrypted data key."""
         kms_encryption_context = self._kms_encryption_context(encryption_context)
         envelope = encryption_context.get("envelope")
@@ -102,7 +102,7 @@ class KmsMaterialsProvider(MaterialsProvider):
             message = "Failed to unwrap AWS KMS protected materials"
             raise Exception(message)
 
-    def _generate_data_key(self, encryption_context: dict[str, any]) -> Tuple[bytes, bytes]:
+    def _generate_data_key(self, encryption_context: Dict[str, any]) -> Tuple[bytes, bytes]:
         """Generate the data key"""
         key_id = self._key_id
         key_length = self._algorithm.data_key_length
