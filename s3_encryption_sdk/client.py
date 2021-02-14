@@ -2,10 +2,10 @@ import boto3
 from botocore.client import BaseClient
 
 from .materials_providers import MaterialsProvider
-from .object import CryptoObject
+from .object import EncryptedObject
 
 
-class CryptoS3(object):
+class EncryptedClient(object):
     def __init__(
         self,
         client: BaseClient,
@@ -15,14 +15,14 @@ class CryptoS3(object):
         self._materials_provider = materials_provider
 
     def put_object(self, Bucket: str, Key: str, **kwargs):
-        obj = CryptoObject(
+        obj = EncryptedObject(
             materials_provider=self._materials_provider,
             object=boto3.resource("s3").Object(Bucket, Key),
         )
         return obj.put(**kwargs)
 
     def get_object(self, Bucket: str, Key: str, **kwargs):
-        obj = CryptoObject(
+        obj = EncryptedObject(
             materials_provider=self._materials_provider,
             object=boto3.resource("s3").Object(Bucket, Key),
         )

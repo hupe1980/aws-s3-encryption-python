@@ -1,8 +1,8 @@
-from s3_encryption_sdk import CryptoBucket
+from s3_encryption_sdk import EncryptedBucket
 
 
 def test_object_get(materials_provider, bucket):
-    crypto_bucket = CryptoBucket(
+    crypto_bucket = EncryptedBucket(
         bucket=bucket,
         materials_provider=materials_provider,
     )

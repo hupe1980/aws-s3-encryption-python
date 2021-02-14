@@ -25,7 +25,7 @@ class KmsMaterialsProvider(MaterialsProvider):
         """Provide decryption materials."""
         envelope = encryption_context.get("envelope")
 
-        initial_material = self._decrypt_data_key(encryption_context=encryption_context)
+        initial_material = self._decrypt_data_key_material(encryption_context=encryption_context)
 
         encryption_key = DataKey(
             algorithm=self._algorithm,
@@ -37,7 +37,7 @@ class KmsMaterialsProvider(MaterialsProvider):
 
     def encryption_materials(self, encryption_context: Dict[str, any]) -> Tuple[DataKey, Envelope]:
         """Provide encryption materials."""
-        initial_material, encrypted_initial_material = self._generate_data_key(encryption_context)
+        initial_material, encrypted_initial_material = self._generate_data_key_material(encryption_context)
         encryption_material_description = encryption_context.get("material_description", {}).copy()
 
         iv = self._algorithm.generate_iv()
@@ -53,13 +53,13 @@ class KmsMaterialsProvider(MaterialsProvider):
 
         envelope.add_kms_data_key_encryption_algorithm()
 
-        encryption_key = DataKey(
+        data_key = DataKey(
             algorithm=self._algorithm,
             key=initial_material,
             iv=iv,
         )
 
-        return encryption_key, envelope
+        return data_key, envelope
 
     def _kms_encryption_context(self, encryption_context: Dict[str, any]):
         """Build the KMS encryption context from the encryption context."""
@@ -76,7 +76,7 @@ class KmsMaterialsProvider(MaterialsProvider):
 
         return kms_encryption_context
 
-    def _decrypt_data_key(self, encryption_context: Dict[str, any]) -> bytes:
+    def _decrypt_data_key_material(self, encryption_context: Dict[str, any]) -> bytes:
         """Decrypt an encrypted data key."""
         kms_encryption_context = self._kms_encryption_context(encryption_context)
         envelope = encryption_context.get("envelope")
@@ -98,8 +98,8 @@ class KmsMaterialsProvider(MaterialsProvider):
             message = "Failed to unwrap AWS KMS protected materials"
             raise Exception(message)
 
-    def _generate_data_key(self, encryption_context: Dict[str, any]) -> Tuple[bytes, bytes]:
-        """Generate the data key"""
+    def _generate_data_key_material(self, encryption_context: Dict[str, any]) -> Tuple[bytes, bytes]:
+        """Generate the data key material"""
         key_id = self._key_id
         key_length = self._algorithm.data_key_length
         kms_params = dict(

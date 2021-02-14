@@ -1,10 +1,10 @@
-from s3_encryption_sdk import CryptoObject
+from s3_encryption_sdk import EncryptedObject
 
 
 def test_get(materials_provider, bucket):
     object = bucket.Object("object")
 
-    crypto_object = CryptoObject(
+    crypto_object = EncryptedObject(
         object=object,
         materials_provider=materials_provider,
     )

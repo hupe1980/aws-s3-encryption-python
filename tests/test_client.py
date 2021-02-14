@@ -1,8 +1,8 @@
-from s3_encryption_sdk import CryptoS3
+from s3_encryption_sdk import EncryptedClient
 
 
 def test_get_object(materials_provider, s3, bucket):
-    crypto_s3 = CryptoS3(
+    crypto_s3 = EncryptedClient(
         client=s3,
         materials_provider=materials_provider,
     )

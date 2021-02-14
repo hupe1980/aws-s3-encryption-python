@@ -1,10 +1,10 @@
 from boto3.resources.base import ServiceResource
 
 from .materials_providers import MaterialsProvider
-from .object import CryptoObject
+from .object import EncryptedObject
 
 
-class CryptoBucket(object):
+class EncryptedBucket(object):
     def __init__(
         self,
         bucket: ServiceResource,
@@ -14,14 +14,14 @@ class CryptoBucket(object):
         self._materials_provider = materials_provider
 
     def put_object(self, Key: str, **kwargs):
-        obj = CryptoObject(
+        obj = EncryptedObject(
             materials_provider=self._materials_provider,
             object=self._bucket.Object(Key),
         )
         return obj.put(**kwargs)
 
-    def Object(self, key: str) -> CryptoObject:
-        return CryptoObject(
+    def Object(self, key: str) -> EncryptedObject:
+        return EncryptedObject(
             materials_provider=self._materials_provider,
             object=self._bucket.Object(key),
         )

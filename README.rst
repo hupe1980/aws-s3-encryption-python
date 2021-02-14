@@ -47,7 +47,7 @@ Usage
 .. code-block:: python
 
    import boto3
-   from s3_encryption_sdk import CryptoS3
+   from s3_encryption_sdk import EncryptedClient
    from s3_encryption_sdk.materials_providers import KmsMaterialsProvider
 
 
@@ -58,7 +58,7 @@ Usage
    
    s3 = boto3.client("s3", region_name="us-east-1")
    
-   crypto_s3 = CryptoS3(
+   crypto_s3 = EncryptedClient(
       client=s3,
       materials_provider=materials_provider,
    )

@@ -25,7 +25,7 @@ class DecryptionStreamingBodyWrapper(object):
         return getattr(self._streaming_body, name)
 
 
-class CryptoObject(object):
+class EncryptedObject(object):
     def __init__(
         self,
         materials_provider: MaterialsProvider,

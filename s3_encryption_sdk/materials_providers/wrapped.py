@@ -19,7 +19,7 @@ class WrappedMaterialsProvider(MaterialsProvider):
         """Provide decryption materials."""
         envelope = encryption_context.get("envelope")
 
-        initial_material = self._decrypt_data_key(encryption_context=encryption_context)
+        initial_material = self._decrypt_data_key_material(encryption_context=encryption_context)
 
         encryption_key = DataKey(
             algorithm=self._algorithm,
@@ -31,7 +31,7 @@ class WrappedMaterialsProvider(MaterialsProvider):
 
     def encryption_materials(self, encryption_context: Dict[str, any]) -> Tuple[DataKey, Envelope]:
         """Provide encryption materials."""
-        initial_material, encrypted_initial_material = self._generate_data_key(encryption_context)
+        initial_material, encrypted_initial_material = self._generate_data_key_material(encryption_context)
         encryption_material_description = encryption_context.get("material_description", {}).copy()
 
         iv = self._algorithm.generate_iv()
@@ -45,22 +45,22 @@ class WrappedMaterialsProvider(MaterialsProvider):
             tag_length=self._algorithm.tag_len * 8,
         )
 
-        encryption_key = DataKey(
+        data_key = DataKey(
             algorithm=self._algorithm,
             key=initial_material,
             iv=iv,
         )
 
-        return encryption_key, envelope
+        return data_key, envelope
 
-    def _decrypt_data_key(self, encryption_context: Dict[str, any]) -> bytes:
+    def _decrypt_data_key_material(self, encryption_context: Dict[str, any]) -> bytes:
         envelope = encryption_context.get("envelope")
-        data_key = self._wrapping_key.unwrap_data_key(envelope.wrapped_data_key)
+        initial_material = self._wrapping_key.unwrap_data_key(envelope.wrapped_data_key)
 
-        return data_key
+        return initial_material
 
-    def _generate_data_key(self, encryption_context: Dict[str, any]) -> Tuple[bytes, bytes]:
-        data_key = self._algorithm.generate_data_key()
-        wrapped_data_key = self._wrapping_key.wrap_data_key(data_key)
+    def _generate_data_key_material(self, encryption_context: Dict[str, any]) -> Tuple[bytes, bytes]:
+        initial_material = self._algorithm.generate_data_key()
+        encrypted_initial_material = self._wrapping_key.wrap_data_key(initial_material)
 
-        return data_key, wrapped_data_key
+        return initial_material, encrypted_initial_material
