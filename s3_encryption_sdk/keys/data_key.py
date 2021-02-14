@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 class DataKeyAlgorithms(Enum):
     AES_128_GCM_IV12_TAG16 = ("AES/GCM/NoPadding", algorithms.AES, modes.GCM, 16, 12, 16)
+    AES_192_GCM_IV12_TAG16 = ("AES/GCM/NoPadding", algorithms.AES, modes.GCM, 24, 12, 16)
     AES_256_GCM_IV12_TAG16 = ("AES/GCM/NoPadding", algorithms.AES, modes.GCM, 32, 12, 16)
 
     def __init__(

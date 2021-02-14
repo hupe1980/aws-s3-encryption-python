@@ -1,12 +1,15 @@
-from typing import Dict, Tuple
+"""Cryptographic materials provider to use wrapped content encryption keys."""
+from typing import Tuple
 
-from ..envelope import Envelope
-from ..data_key import DataKeyAlgorithms, DataKey
-from ..wrapping_key import WrappingKey
+from ..keys import WrappingKey, DataKeyAlgorithms, DataKey
+from ..materials import EncryptionMaterials, Metadata
 from .base import MaterialsProvider
+from .context import EncryptionContext
 
 
 class WrappedMaterialsProvider(MaterialsProvider):
+    """Cryptographic materials provider to use wrapped content encryption keys."""
+
     def __init__(
         self,
         wrapping_key: WrappingKey,
@@ -15,34 +18,37 @@ class WrappedMaterialsProvider(MaterialsProvider):
         self._wrapping_key = wrapping_key
         self._algorithm = algorithm
 
-    def decryption_materials(self, encryption_context: Dict[str, any]) -> DataKey:
+    def decryption_materials(self, encryption_context: EncryptionContext) -> EncryptionMaterials:
         """Provide decryption materials."""
-        envelope = encryption_context.get("envelope")
+        metadata = Metadata.from_s3_metatdata(encryption_context.s3_metadata)
 
         initial_material = self._decrypt_data_key_material(encryption_context=encryption_context)
 
-        encryption_key = DataKey(
+        data_key = DataKey(
             algorithm=self._algorithm,
             key=initial_material,
-            iv=envelope.iv,
+            iv=metadata.iv,
         )
 
-        return encryption_key
+        encryption_materials = EncryptionMaterials(data_key=data_key, metadata=metadata)
 
-    def encryption_materials(self, encryption_context: Dict[str, any]) -> Tuple[DataKey, Envelope]:
+        return encryption_materials
+
+    def encryption_materials(self, encryption_context: EncryptionContext) -> EncryptionMaterials:
         """Provide encryption materials."""
-        initial_material, encrypted_initial_material = self._generate_data_key_material(encryption_context)
-        encryption_material_description = encryption_context.get("material_description", {}).copy()
+        initial_material, encrypted_initial_material = self._generate_data_key_material()
+        material_description = encryption_context.material_description
 
         iv = self._algorithm.generate_iv()
 
-        envelope = Envelope(
+        metadata = Metadata(
             iv=iv,
-            material_description=encryption_material_description,
+            material_description=material_description,
             key_wrapping_algorithm=self._wrapping_key.algorithm_name,
             content_encryption_algorithm=self._algorithm.name,
             wrapped_data_key=encrypted_initial_material,
             tag_length=self._algorithm.tag_len * 8,
+            unencrypted_content_length=encryption_context.unencrypted_content_length,
         )
 
         data_key = DataKey(
@@ -51,15 +57,19 @@ class WrappedMaterialsProvider(MaterialsProvider):
             iv=iv,
         )
 
-        return data_key, envelope
+        encryption_materials = EncryptionMaterials(data_key=data_key, metadata=metadata)
 
-    def _decrypt_data_key_material(self, encryption_context: Dict[str, any]) -> bytes:
-        envelope = encryption_context.get("envelope")
-        initial_material = self._wrapping_key.unwrap_data_key(envelope.wrapped_data_key)
+        return encryption_materials
+
+    def _decrypt_data_key_material(self, encryption_context: EncryptionContext) -> bytes:
+        """Decrypt an encrypted data key."""
+        metadata = Metadata.from_s3_metatdata(encryption_context.s3_metadata)
+        initial_material = self._wrapping_key.unwrap_data_key(metadata.wrapped_data_key)
 
         return initial_material
 
-    def _generate_data_key_material(self, encryption_context: Dict[str, any]) -> Tuple[bytes, bytes]:
+    def _generate_data_key_material(self) -> Tuple[bytes, bytes]:
+        """Generate the data key material"""
         initial_material = self._algorithm.generate_data_key()
         encrypted_initial_material = self._wrapping_key.wrap_data_key(initial_material)
 

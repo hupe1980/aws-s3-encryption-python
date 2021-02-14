@@ -1,19 +1,18 @@
-from typing import Dict, Tuple
+"""Base cryptographic materials provider for all cryptographic materials providers."""
+
 from abc import ABC, abstractmethod
 
-from ..data_key import DataKey
-from ..envelope import Envelope
+from ..materials import EncryptionMaterials
+from .context import EncryptionContext
 
 
 class MaterialsProvider(ABC):
     """Base class for all cryptographic materials providers."""
 
     @abstractmethod
-    def decryption_materials(self, encryption_context: Dict[str, any]) -> DataKey:
+    def decryption_materials(self, encryption_context: EncryptionContext) -> EncryptionMaterials:
         """Provide decryption materials."""
-        pass
 
     @abstractmethod
-    def encryption_materials(self, encryption_context: Dict[str, any]) -> Tuple[DataKey, Envelope]:
+    def encryption_materials(self, encryption_context: EncryptionContext) -> EncryptionMaterials:
         """Provide encryption materials."""
-        pass

@@ -16,14 +16,14 @@ class EncryptedBucket(object):
     def put_object(self, Key: str, **kwargs):
         obj = EncryptedObject(
             materials_provider=self._materials_provider,
-            object=self._bucket.Object(Key),
+            obj=self._bucket.Object(Key),
         )
         return obj.put(**kwargs)
 
     def Object(self, key: str) -> EncryptedObject:
         return EncryptedObject(
             materials_provider=self._materials_provider,
-            object=self._bucket.Object(key),
+            obj=self._bucket.Object(key),
         )
 
     def __getattr__(self, name: str):

@@ -1,9 +1,20 @@
-from typing import Dict, Tuple
+"""Cryptographic materials provider for use with the AWS Key Management Service (KMS)."""
+from typing import Tuple
 import botocore
 
-from ..envelope import Envelope
-from ..data_key import DataKeyAlgorithms, DataKey
+from ..keys import DataKeyAlgorithms, DataKey
+from ..materials import EncryptionMaterials, Metadata
 from .base import MaterialsProvider
+from .context import EncryptionContext
+
+
+def _kms_encryption_context(encryption_context: EncryptionContext):
+    """Build the KMS encryption context from the encryption context."""
+    kms_encryption_context = dict(
+        s3_bucket_name=encryption_context.bucket_name,
+        s3_object_key=encryption_context.object_key,
+    )
+    return kms_encryption_context
 
 
 class KmsMaterialsProvider(MaterialsProvider):
@@ -21,37 +32,28 @@ class KmsMaterialsProvider(MaterialsProvider):
         self._grant_tokens = grant_tokens
         self._algorithm = algorithm
 
-    def decryption_materials(self, encryption_context: Dict[str, any]) -> DataKey:
+    def decryption_materials(self, encryption_context: EncryptionContext) -> EncryptionMaterials:
         """Provide decryption materials."""
-        envelope = encryption_context.get("envelope")
+        metadata = Metadata.from_s3_metatdata(encryption_context.s3_metadata)
 
         initial_material = self._decrypt_data_key_material(encryption_context=encryption_context)
 
-        encryption_key = DataKey(
+        data_key = DataKey(
             algorithm=self._algorithm,
             key=initial_material,
-            iv=envelope.iv,
+            iv=metadata.iv,
         )
 
-        return encryption_key
+        encryption_materials = EncryptionMaterials(data_key=data_key, metadata=metadata)
 
-    def encryption_materials(self, encryption_context: Dict[str, any]) -> Tuple[DataKey, Envelope]:
+        return encryption_materials
+
+    def encryption_materials(self, encryption_context: EncryptionContext) -> EncryptionMaterials:
         """Provide encryption materials."""
         initial_material, encrypted_initial_material = self._generate_data_key_material(encryption_context)
-        encryption_material_description = encryption_context.get("material_description", {}).copy()
+        material_description = encryption_context.material_description
 
         iv = self._algorithm.generate_iv()
-
-        envelope = Envelope(
-            iv=iv,
-            material_description=encryption_material_description,
-            key_wrapping_algorithm="kms",
-            content_encryption_algorithm=self._algorithm.name,
-            wrapped_data_key=encrypted_initial_material,
-            tag_length=self._algorithm.tag_len * 8,
-        )
-
-        envelope.add_kms_data_key_encryption_algorithm()
 
         data_key = DataKey(
             algorithm=self._algorithm,
@@ -59,29 +61,28 @@ class KmsMaterialsProvider(MaterialsProvider):
             iv=iv,
         )
 
-        return data_key, envelope
+        material_description["aws:x-amz-cek-alg"] = "AES/GCM/NoPadding"
 
-    def _kms_encryption_context(self, encryption_context: Dict[str, any]):
-        """Build the KMS encryption context from the encryption context."""
-        kms_encryption_context = {}
+        metadata = Metadata(
+            iv=iv,
+            material_description=material_description,
+            key_wrapping_algorithm="kms",
+            content_encryption_algorithm=self._algorithm.name,
+            wrapped_data_key=encrypted_initial_material,
+            tag_length=self._algorithm.tag_len * 8,
+            unencrypted_content_length=encryption_context.unencrypted_content_length,
+        )
 
-        bucket_name = encryption_context.get("bucket_name", None)
-        object_key = encryption_context.get("object_key", None)
+        encryption_materials = EncryptionMaterials(data_key=data_key, metadata=metadata)
 
-        if bucket_name is not None:
-            kms_encryption_context["s3_bucket_name"] = bucket_name
+        return encryption_materials
 
-        if object_key is not None:
-            kms_encryption_context["s3_object_key"] = object_key
-
-        return kms_encryption_context
-
-    def _decrypt_data_key_material(self, encryption_context: Dict[str, any]) -> bytes:
+    def _decrypt_data_key_material(self, encryption_context: EncryptionContext) -> bytes:
         """Decrypt an encrypted data key."""
-        kms_encryption_context = self._kms_encryption_context(encryption_context)
-        envelope = encryption_context.get("envelope")
+        kms_encryption_context = _kms_encryption_context(encryption_context)
+        metadata = Metadata.from_s3_metatdata(encryption_context.s3_metadata)
 
-        encrypted_initial_material = envelope.wrapped_data_key
+        encrypted_initial_material = metadata.wrapped_data_key
 
         kms_params = dict(
             CiphertextBlob=encrypted_initial_material,
@@ -98,14 +99,14 @@ class KmsMaterialsProvider(MaterialsProvider):
             message = "Failed to unwrap AWS KMS protected materials"
             raise Exception(message)
 
-    def _generate_data_key_material(self, encryption_context: Dict[str, any]) -> Tuple[bytes, bytes]:
+    def _generate_data_key_material(self, encryption_context: EncryptionContext) -> Tuple[bytes, bytes]:
         """Generate the data key material"""
         key_id = self._key_id
         key_length = self._algorithm.data_key_length
         kms_params = dict(
             KeyId=key_id,
             NumberOfBytes=key_length,
-            EncryptionContext=self._kms_encryption_context(encryption_context),
+            EncryptionContext=_kms_encryption_context(encryption_context),
         )
 
         if self._grant_tokens:

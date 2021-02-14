@@ -1,6 +1,6 @@
 import secrets
-from s3_encryption_sdk import AesWrappingKey
-from s3_encryption_sdk.materials_providers import WrappedMaterialsProvider
+from s3_encryption_sdk.keys import AesWrappingKey
+from s3_encryption_sdk.materials_providers import EncryptionContext, WrappedMaterialsProvider
 
 
 def test_encryption_materials():
@@ -12,17 +12,21 @@ def test_encryption_materials():
 
     plaintext = b"foo bar"
 
-    encryption_key, envelope = materials_provider.encryption_materials(encryption_context=dict())
+    encryption_context = EncryptionContext(bucket_name="dummy", object_key="dummy")
 
-    ciphertext = encryption_key.encrypt(plaintext)
+    materials = materials_provider.encryption_materials(encryption_context)
 
-    decryption_key = materials_provider.decryption_materials(
-        encryption_context=dict(
-            envelope=envelope,
-        )
+    ciphertext = materials.data_key.encrypt(plaintext)
+
+    encryption_context = EncryptionContext(
+        bucket_name="dummy",
+        object_key="dummy",
+        s3_metadata=materials.metadata.generate(),
     )
 
-    decrypted_ciphertext = decryption_key.decrypt(ciphertext)
+    materials = materials_provider.decryption_materials(encryption_context)
+
+    decrypted_ciphertext = materials.data_key.decrypt(ciphertext)
 
     assert plaintext != ciphertext
     assert plaintext == decrypted_ciphertext

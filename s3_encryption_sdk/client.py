@@ -17,14 +17,14 @@ class EncryptedClient(object):
     def put_object(self, Bucket: str, Key: str, **kwargs):
         obj = EncryptedObject(
             materials_provider=self._materials_provider,
-            object=boto3.resource("s3").Object(Bucket, Key),
+            obj=boto3.resource("s3").Object(Bucket, Key),
         )
         return obj.put(**kwargs)
 
     def get_object(self, Bucket: str, Key: str, **kwargs):
         obj = EncryptedObject(
             materials_provider=self._materials_provider,
-            object=boto3.resource("s3").Object(Bucket, Key),
+            obj=boto3.resource("s3").Object(Bucket, Key),
         )
         return obj.get(**kwargs)
 
