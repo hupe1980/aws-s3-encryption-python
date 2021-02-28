@@ -81,8 +81,8 @@ class DataKey(object):
 
     def decrypt(self, ciphertext: bytes) -> bytes:
         """Decrypt data."""
-        tag = ciphertext[-self._algorithm.tag_len :]
-        ciphertext = ciphertext[: -self._algorithm.tag_len]
+        tag = ciphertext[-self._algorithm.tag_len:]
+        ciphertext = ciphertext[:-self._algorithm.tag_len]
 
         decryptor = Cipher(
             algorithm=self._algorithm.algorithm(self._key),

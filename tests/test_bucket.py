@@ -17,5 +17,5 @@ def test_object_get(materials_provider, bucket):
     encrypted_obj = bucket.Object("object").get()
     decrypted_obj = crypto_bucket.Object("object").get()
 
-    assert body != encrypted_obj["Body"].read().decode("utf8")
-    assert body == decrypted_obj["Body"].read().decode("utf8")
+    assert body != encrypted_obj["Body"].read().decode()
+    assert body == decrypted_obj["Body"].read().decode()

@@ -25,5 +25,5 @@ def test_get_object(materials_provider, s3, bucket):
         Key="object",
     )
 
-    assert body != encrypted_obj["Body"].read().decode("utf8")
-    assert body == decrypted_obj["Body"].read().decode("utf8")
+    assert body != encrypted_obj["Body"].read().decode()
+    assert body == decrypted_obj["Body"].read().decode()
